@@ -125,7 +125,7 @@ class TestDashboardAuthIntegration:
     def test_do_login_e2e_against_testclient(self):
         # We test do_login against our actual backend using a patch to requests.post
         # that redirects requests directly to the FastAPI TestClient
-        from fastapi.testclient import TestClient
+        from starlette.testclient import TestClient
         from backend.main import app
 
         client = TestClient(app)

@@ -2,25 +2,40 @@
 backend/auth/auth_dependencies.py
 ─────────────────────────────────────────────────────────────────
 FastAPI dependencies for route protection and RBAC guards.
+
+Repository selection:
+  • ENVIRONMENT=testing  →  InMemoryUserRepository (no DB needed)
+  • Any other value      →  PostgresUserRepository (requires DB)
+  Never falls back silently — a missing DATABASE_URL in production
+  raises ConfigurationError.
 """
 
 from typing import List, Dict, Any, Optional
 from fastapi import Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from backend.core.config import settings
 from backend.core.exceptions import TokenInvalidError, InsufficientPermissionsError
-from backend.services.auth_service import AuthService
+from backend.database.session import get_db
+from backend.repositories.postgres_user_repository import PostgresUserRepository
 from backend.repositories.user_repository import UserRepositoryInterface, InMemoryUserRepository
+from backend.services.auth_service import AuthService
 
 # Secure credentials extraction helper using standard HTTP Bearer schema
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_user_repository() -> UserRepositoryInterface:
+def get_user_repository(db=Depends(get_db)) -> UserRepositoryInterface:
     """
     Provider dependency function for the user repository.
+
+    Uses InMemoryUserRepository **only** when ENVIRONMENT=testing.
+    All other environments receive a PostgresUserRepository backed
+    by the real database session — no silent fallback.
     """
-    return InMemoryUserRepository()
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryUserRepository()
+    return PostgresUserRepository(db)
 
 
 def get_auth_service(

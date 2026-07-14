@@ -84,6 +84,11 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
+    # ── Database (PostgreSQL) ─────────────────────────────────────────────────
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    TEST_DATABASE_URL: str = os.getenv("TEST_DATABASE_URL", "")
+    DB_ECHO: bool = os.getenv("DB_ECHO", "false").lower() == "true"
+
     # ── Flags ─────────────────────────────────────────────────────────────────
     TOP_RISK_FACTORS_N: int = int(os.getenv("TOP_RISK_FACTORS_N", "5"))
 

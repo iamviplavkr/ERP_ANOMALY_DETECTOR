@@ -5,7 +5,7 @@ Tests the single and batch prediction endpoints.
 All prediction endpoints require JWT authentication with an authorised role.
 """
 
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from backend.main import app
 from tests.conftest import auth_header
 

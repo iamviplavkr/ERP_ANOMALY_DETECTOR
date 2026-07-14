@@ -5,7 +5,7 @@ Tests the statistics and telemetry metadata endpoints.
 Now requires JWT authentication.
 """
 
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from backend.main import app
 from tests.conftest import auth_header
 

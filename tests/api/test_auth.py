@@ -6,7 +6,7 @@ Covers login, logout, token refresh, /me profile, and role access control.
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from backend.main import app
 from tests.conftest import auth_header
 

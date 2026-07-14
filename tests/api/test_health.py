@@ -4,7 +4,7 @@ tests/api/test_health.py
 Tests the health check and root endpoints.
 """
 
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from backend.main import app
 
 client = TestClient(app)

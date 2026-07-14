@@ -76,7 +76,7 @@ def mock_model_artifacts():
 @pytest.fixture(scope="session")
 def test_client():
     """Session-scoped TestClient for all API tests."""
-    from fastapi.testclient import TestClient
+    from starlette.testclient import TestClient
     from backend.main import app
     return TestClient(app)
 

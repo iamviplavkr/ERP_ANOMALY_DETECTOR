@@ -22,6 +22,7 @@ from backend.core.exceptions import (
     TokenExpiredError,
     TokenInvalidError,
     InsufficientPermissionsError,
+    DatabaseError,
 )
 from backend.core.logging import get_logger
 
@@ -127,6 +128,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
             content={"error": "Forbidden", "message": exc.message}
+        )
+
+    @app.exception_handler(DatabaseError)
+    async def database_error_handler(request: Request, exc: DatabaseError):
+        logger.error(f"Database Error: {exc.message}", extra={"details": exc.details})
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"error": "DatabaseError", "message": exc.message, "details": exc.details}
         )
 
     @app.exception_handler(ERPBaseException)

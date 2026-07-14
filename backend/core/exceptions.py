@@ -82,3 +82,9 @@ class TokenInvalidError(AuthError):
 class InsufficientPermissionsError(ERPBaseException):
     """Raised when the user has valid authentication but fails RBAC check."""
 
+
+# ── Database Errors ───────────────────────────────────────────────────────────
+
+class DatabaseError(ERPBaseException):
+    """Raised when a database operation fails (connection, query, migration)."""
+
