@@ -15,198 +15,116 @@ Trained and evaluated on **284,807 real transactions** with a fraud rate of only
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Production-Ready Architecture
 
-```
-creditcard.csv (Kaggle)
-       │
-       ▼
-┌─────────────────────┐
-│  Feature Engineering │  log_amount, hour_of_day, is_night, amount_zscore
-└─────────────────────┘
-       │
-       ▼
-┌─────────────────────┐     ┌─────────────────────┐
-│  Isolation Forest    │     │   Random Forest      │
-│  (Unsupervised)      │     │  (Supervised)        │
-│  Precision: 25%      │     │  Precision: 96%  ✅  │
-└─────────────────────┘     └─────────────────────┘
-                                      │
-                                      ▼
-                             ┌─────────────────────┐
-                             │   SHAP Explainability│
-                             │   Top risk factors   │
-                             └─────────────────────┘
-                                      │
-                          ┌───────────┴───────────┐
-                          ▼                       ▼
-                   ┌─────────────┐       ┌─────────────────┐
-                   │  FastAPI    │       │    Streamlit     │
-                   │  REST API   │       │    Dashboard     │
-                   │  /predict   │       │  3 pages + charts│
-                   │  /batch     │       │  CSV upload      │
-                   └─────────────┘       └─────────────────┘
-```
-
----
-
-## 🧠 Models Used
-
-**Isolation Forest** — unsupervised anomaly detection. No labels needed. Isolates outliers in feature space. Used as baseline.
-
-**Random Forest** — supervised classifier with `class_weight='balanced'` to handle the 0.17% fraud rate. Significantly outperforms Isolation Forest on this dataset.
-
-**SHAP** — explains *why* each transaction was flagged by showing the top contributing features per prediction.
-
----
-
-## ⚙️ Feature Engineering
-
-| Raw Field | Engineered Feature | Description |
-|---|---|---|
-| `Amount` | `log_amount` | Log-transformed to reduce skew |
-| `Amount` | `amount_zscore` | Z-score relative to dataset mean |
-| `Time` | `hour_of_day` | Hour extracted from seconds |
-| `Time` | `is_night` | 1 if transaction between 10pm–6am |
-
----
-
-## 🗂️ Project Structure
+The codebase has been refactored into a scalable, production-ready, modular architecture:
 
 ```
 ERP_ANOMALY_DETECTOR/
 │
-├── pipeline.py          # Full ML pipeline: EDA → models → SHAP → flagged transactions
-├── save_model.py        # Trains model and saves .pkl artifacts
-├── api.py               # FastAPI backend with /predict and /batch endpoints
-├── dashboard.py         # Streamlit dashboard (3 pages)
+├── backend/                  # FastAPI REST API Backend
+│   ├── api/                  # Versioned routers (/v1/predict, /v1/stats)
+│   ├── auth/                 # API Key authentication middleware
+│   ├── core/                 # Centralized Config (.env), Exceptions, Logging
+│   ├── middleware/           # HTTP Request Logger, Global Error Handlers
+│   ├── models/               # Domain model representations
+│   ├── repositories/         # Thread-safe model artifact caching
+│   ├── schemas/              # Pydantic Request/Response models
+│   ├── utils/                # Risk-level evaluation and risk factor formats
+│   └── main.py               # Uvicorn API entry point
 │
-├── model.pkl            # Trained Random Forest model
-├── scaler.pkl           # StandardScaler fitted on training data
-├── feature_cols.pkl     # Feature column names
+├── frontend/                 # Streamlit UI Dashboard
+│   └── dashboard.py          # Streamlit implementation (multi-page)
 │
-├── requirements.txt     # Python dependencies
-└── render.yaml          # Render deployment config
+├── ml/                       # Machine Learning Pipeline Modules
+│   ├── training/             # Model training pipelines (train.py)
+│   ├── evaluation/           # Performance evaluators (evaluator.py)
+│   ├── features/             # Shared Feature Engineering logic
+│   └── explainability/       # SHAP interpretation wrapper (shap_explainer.py)
+│
+├── artifacts/                # Serialized model binaries (.pkl)
+├── data/                     # Raw datasets (.csv)
+├── tests/                    # API, service, feature and integration tests
+├── scripts/                  # DevOps setup and run automation tasks
+│
+├── Makefile                  # Build, run and test command shortcuts
+├── Dockerfile                # Production Docker build container
+├── docker-compose.yml        # Docker compose stack file
+├── requirements.txt          # Python dependencies
+└── render.yaml               # Cloud deployment descriptor
 ```
 
 ---
 
 ## 🚀 How to Run
 
-### 1. Clone the repo
+### 1. Clone and Navigate
 ```bash
 git clone https://github.com/iamviplavkr/ERP_ANOMALY_DETECTOR.git
 cd ERP_ANOMALY_DETECTOR
 ```
 
-### 2. Set up virtual environment
+### 2. Set Up Virtual Environment & Dependencies
 ```bash
 python -m venv venv
 venv\Scripts\activate        # Windows
 source venv/bin/activate     # Mac/Linux
-```
 
-### 3. Install dependencies
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Download the dataset
-Download `creditcard.csv` from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) and place it in the project root.
-
-### 5. Train and save the model
+### 3. Initialize Directories and Model Artifacts
+Run the setup script or make target to copy/create directories and setup templates:
 ```bash
-python save_model.py
+make setup
+# OR: python scripts/setup_artifacts.py
 ```
+> Download `creditcard.csv` from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) and place it in the `data/` directory.
 
-### 6. Run the ML pipeline
+### 4. Train Model
 ```bash
-python pipeline.py
+make train
+# OR: python ml/training/train.py
 ```
 
-### 7. Start the FastAPI backend
+### 5. Launch FastAPI Backend
 ```bash
-python -m uvicorn api:app --reload
+make run-api
+# OR: python backend/main.py
 ```
-Open `http://127.0.0.1:8000/docs` for Swagger UI.
+Visit Swagger API Docs at `http://127.0.0.1:8000/docs`.
 
-### 8. Launch the Streamlit dashboard
+### 6. Launch Streamlit Dashboard
 ```bash
-python -m streamlit run dashboard.py
-```
-Open `http://localhost:8501`
-
----
-
-## 🔌 API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/health` | Check API status |
-| `GET` | `/stats` | Model info and feature list |
-| `POST` | `/predict` | Analyze a single transaction |
-| `POST` | `/predict/batch` | Analyze multiple transactions |
-
-### Sample Request — `/predict`
-```json
-{
-  "vendor_id": "V00123",
-  "department": "Finance",
-  "approved_by": "mgr_01",
-  "posting_time": 3600,
-  "transaction_amount": 9999.99,
-  "V1": -2.3, "V2": 1.9, "V3": -2.1, "V4": 3.2,
-  "V5": -1.1, "V6": 0.5, "V7": -0.8, "V8": 0.3,
-  "V9": -0.6, "V10": -2.4, "V11": 1.8, "V12": -3.1,
-  "V13": 0.2, "V14": -2.5, "V15": 0.4, "V16": -1.2,
-  "V17": -2.8, "V18": -0.3, "V19": 0.1, "V20": 0.2,
-  "V21": 0.5, "V22": -0.1, "V23": 0.0, "V24": 0.3,
-  "V25": 0.1, "V26": -0.2, "V27": 0.1, "V28": 0.0
-}
-```
-
-### Sample Response
-```json
-{
-  "vendor_id": "V00123",
-  "department": "Finance",
-  "anomaly_score": 0.87,
-  "is_fraud": true,
-  "risk_level": "HIGH",
-  "alert_message": "⚠️ High-risk transaction flagged. Immediate review required.",
-  "top_risk_factors": [
-    { "feature": "V14", "importance": 0.1602, "value": -2.5 },
-    { "feature": "V12", "importance": 0.1108, "value": -3.1 }
-  ]
-}
+make run-dashboard
+# OR: streamlit run frontend/dashboard.py
 ```
 
 ---
 
-## 📦 Tech Stack
+## 🧪 Running Tests
 
-| Layer | Technology |
-|---|---|
-| Language | Python 3.14 |
-| ML Models | Scikit-learn (Isolation Forest, Random Forest) |
-| Explainability | SHAP |
-| API | FastAPI + Uvicorn |
-| Dashboard | Streamlit + Plotly |
-| Data | Pandas, NumPy |
-| Version Control | Git + GitHub |
+A complete suite of unit and integration tests is located in the `tests/` directory:
+```bash
+make test
+# OR: pytest tests/ -v
+```
 
 ---
 
-## 📁 Dataset
+## ⚙️ Configuration Management
 
-[Credit Card Fraud Detection — Kaggle (ULB)](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+The application loads environment variables using python-dotenv. Create a `.env` file in the root directory (based on `.env.example`) to configure parameters:
 
-- 284,807 transactions
-- 492 fraud cases (0.17%)
-- 30 features (V1–V28 PCA-transformed + Time + Amount)
-- No missing values
-
-> The dataset is not included in this repo due to its size (143MB). Download directly from Kaggle.
+```env
+APP_NAME="ERP Anomaly Detector"
+DEBUG=true
+PORT=8000
+FRAUD_THRESHOLD=0.5
+HIGH_RISK_THRESHOLD=0.8
+REQUIRE_API_KEY=false
+API_KEY="your-api-key"
+```
 
 ---
 

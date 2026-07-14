@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: erp-anomaly-detector
+    env: python
+    buildCommand: pip install -r requirements.txt && python scripts/setup_artifacts.py
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    plan: free
