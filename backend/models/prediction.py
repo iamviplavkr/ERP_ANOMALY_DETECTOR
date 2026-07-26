@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, JSON, String, Uuid, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database.session import Base
 
@@ -31,6 +31,11 @@ class PredictionModel(Base):
     model_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    # Relationship to transaction
+    transaction_rel: Mapped["TransactionModel"] = relationship(  # noqa: F821
+        "TransactionModel", lazy="joined"
     )
 
     def __repr__(self) -> str:

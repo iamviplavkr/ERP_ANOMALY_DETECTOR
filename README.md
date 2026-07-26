@@ -1,135 +1,451 @@
 # 🔍 ERP Anomaly Detector
 
-An AI-powered fraud detection system for ERP financial transactions using Machine Learning, SHAP explainability, FastAPI, and Streamlit.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.24%2B-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.2%2B-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![SHAP](https://img.shields.io/badge/SHAP-Explainability-brightgreen)](https://shap.readthedocs.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+An enterprise-grade, AI-powered fraud detection platform designed for ERP financial transactions. The system combines supervised **Random Forest** classification, an unsupervised **Isolation Forest** baseline, **SHAP** explainability, a robust **FastAPI** REST backend, **PostgreSQL** persistence, **JWT** authentication with 4-tier **Role-Based Access Control (RBAC)**, and an interactive **Streamlit** BI Analytics dashboard.
 
 ---
 
-## 📊 Results
+## 📌 Table of Contents
 
-| Model | Precision | Recall | F1-Score | PR-AUC |
-|---|---|---|---|---|
-| Isolation Forest | 25% | 33% | 0.28 | 0.19 |
-| **Random Forest** | **96%** | **76%** | **0.85** | **0.88** |
-
-Trained and evaluated on **284,807 real transactions** with a fraud rate of only **0.17%** (highly imbalanced).
+- [💡 Why This Project?](#-why-this-project)
+- [✨ Key Features](#-key-features)
+- [📊 Model Performance](#-model-performance)
+- [🛠️ Technology Stack](#️-technology-stack)
+- [🏗️ System Architecture](#️-system-architecture)
+- [📡 API Overview](#-api-overview)
+- [📝 Example API Request & Response](#-example-api-request--response)
+- [🖥️ Dashboard Previews](#️-dashboard-previews)
+- [🗄️ Database & Persistence Layer](#️-database--persistence-layer)
+- [🔒 Security & Governance](#-security--governance)
+- [⚙️ Installation & Setup](#️-installation--setup)
+- [🧪 Running Tests](#-running-tests)
+- [🔄 Project Workflow](#-project-workflow)
+- [🚀 Future Improvements](#-future-improvements)
 
 ---
 
-## 🏗️ Production-Ready Architecture
+## 💡 Why This Project?
 
-The codebase has been refactored into a scalable, production-ready, modular architecture:
+Enterprise Resource Planning (ERP) systems handle millions of dollars across thousands of daily financial transactions. Manual audit checks are costly, slow, and fail to scale, making organizations vulnerable to procurement fraud, duplicate billing, and internal corruption. 
+
+**ERP Anomaly Detector** solves this by delivering automated ML risk scoring, explainable anomaly factors, an automated alert management lifecycle, and executive BI analytics—empowering audit and fraud teams to prevent financial loss in real time.
+
+---
+
+## ✨ Key Features
+
+- **🤖 Dual ML Pipeline**: Supervised Random Forest classifier paired with an unsupervised Isolation Forest baseline.
+- **💡 SHAP Tree Explainability**: Computes per-transaction feature importances so analysts understand *why* a transaction was flagged.
+- **⚡ Single & Batch Risk Analysis**: REST APIs supporting instant single-transaction checks and high-throughput bulk CSV analysis.
+- **⚡ FastAPI REST Services**: Scalable asynchronous API architecture featuring interactive Swagger UI (`/docs`) and ReDoc (`/redoc`).
+- **🔒 JWT Auth & 4-Tier RBAC**: Token-based security enforcing granular permissions for `Admin`, `Fraud Analyst`, `Auditor`, and `Finance User` roles.
+- **🗄️ PostgreSQL Persistence**: Robust ORM storage via SQLAlchemy for transactions, predictions, alerts, vendors, audit logs, and users.
+- **🚨 Automated Risk Engine & Alert Lifecycle**: Rules-based alert generation with status workflows (`OPEN` → `INVESTIGATING` → `RESOLVED` / `DISMISSED`).
+- **🤝 Vendor Risk Directory**: Vendor directory tracking reputation scores (0–100), blacklist/watchlist flags, and historical threat statistics.
+- **📈 Executive BI Analytics**: Real-time Streamlit dashboard featuring Plotly visualizations, department breakdowns, daily trends, and paginated vendor rankings.
+- **📥 Secure CSV Export**: Audit-logged data exports combining transaction payloads, anomaly scores, and model metadata.
+
+---
+
+## 📊 Model Performance
+
+Evaluated on **284,807 real-world financial transactions** featuring a highly imbalanced class distribution (**0.17% fraud rate**).
+
+| Model | Precision | Recall | F1-Score | PR-AUC | Type |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| Isolation Forest | 25.00% | 33.00% | 0.2800 | 0.1900 | Unsupervised Baseline |
+| **Random Forest** | **89.66%** | **79.59%** | **0.8431** | **0.8743** | **Supervised Model (Active)** |
+
+> [!NOTE]
+> Evaluation metrics are retrieved directly from `artifacts/model_metadata.json` generated by the training pipeline. Precision-Recall AUC (PR-AUC) is prioritized over standard ROC-AUC due to extreme class imbalance.
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technologies Used |
+| :--- | :--- |
+| **Backend** | Python 3.10+, FastAPI, Uvicorn, Pydantic v2, PyJWT, Passlib, Bcrypt |
+| **Machine Learning** | Scikit-learn, Random Forest, Isolation Forest, SHAP, Pandas, NumPy |
+| **Frontend** | Streamlit, Plotly (Express & Graph Objects), Requests |
+| **Database** | PostgreSQL, SQLAlchemy 2.0 ORM, Alembic Migrations |
+| **Testing** | Pytest, HTTPX |
+| **DevOps & Tooling** | Makefile, python-dotenv, Render Deployment Config (`render.yaml`) |
+
+---
+
+## 🏗️ System Architecture
+
+### 📂 Directory Structure
 
 ```
 ERP_ANOMALY_DETECTOR/
 │
-├── backend/                  # FastAPI REST API Backend
-│   ├── api/                  # Versioned routers (/v1/predict, /v1/stats)
-│   ├── auth/                 # API Key authentication middleware
-│   ├── core/                 # Centralized Config (.env), Exceptions, Logging
-│   ├── middleware/           # HTTP Request Logger, Global Error Handlers
-│   ├── models/               # Domain model representations
-│   ├── repositories/         # Thread-safe model artifact caching
-│   ├── schemas/              # Pydantic Request/Response models
-│   ├── utils/                # Risk-level evaluation and risk factor formats
-│   └── main.py               # Uvicorn API entry point
+├── backend/                  # FastAPI REST API Application
+│   ├── api/                  # Versioned API routes (/v1/auth, /v1/predict, etc.)
+│   ├── auth/                 # JWT authentication & RBAC role checkers
+│   ├── constants/            # Risk levels, thresholds, and system constants
+│   ├── core/                 # Centralized configuration (.env), exceptions, and logging
+│   ├── database/             # SQLAlchemy engine, session management, and DB seeder
+│   ├── middleware/           # HTTP logging & exception-to-HTTP handlers
+│   ├── models/               # SQLAlchemy ORM models (User, Transaction, Alert, etc.)
+│   ├── repositories/         # Data access repositories & thread-safe artifact caching
+│   ├── schemas/              # Pydantic request/response validation schemas
+│   ├── services/             # Core business logic (Prediction, Analytics, Auth)
+│   └── main.py               # Application entry point & Uvicorn runner
 │
 ├── frontend/                 # Streamlit UI Dashboard
-│   └── dashboard.py          # Streamlit implementation (multi-page)
+│   └── dashboard.py          # Interactive multi-page BI analytics dashboard
 │
-├── ml/                       # Machine Learning Pipeline Modules
-│   ├── training/             # Model training pipelines (train.py)
-│   ├── evaluation/           # Performance evaluators (evaluator.py)
-│   ├── features/             # Shared Feature Engineering logic
-│   └── explainability/       # SHAP interpretation wrapper (shap_explainer.py)
+├── ml/                       # Machine Learning Engineering Pipeline
+│   ├── training/             # Model training script (train.py)
+│   ├── evaluation/           # Metric evaluation utilities (evaluator.py)
+│   ├── features/             # Shared feature engineering logic
+│   └── explainability/       # SHAP Tree Explainer wrapper (shap_explainer.py)
 │
-├── artifacts/                # Serialized model binaries (.pkl)
-├── data/                     # Raw datasets (.csv)
-├── tests/                    # API, service, feature and integration tests
-├── scripts/                  # DevOps setup and run automation tasks
+├── alembic/                  # Database schema migration scripts
+├── artifacts/                # Model binaries (.pkl) & metadata (model_metadata.json)
+├── data/                     # Raw datasets (creditcard.csv)
+├── docs/                     # Architecture & system design documentation
+├── logs/                     # Application execution log outputs
+├── scripts/                  # DevOps pipeline runners & setup tasks
+├── tests/                    # Pytest test suites (unit, API, service, integration)
 │
-├── Makefile                  # Build, run and test command shortcuts
-├── Dockerfile                # Production Docker build container
-├── docker-compose.yml        # Docker compose stack file
-├── requirements.txt          # Python dependencies
-└── render.yaml               # Cloud deployment descriptor
+├── Makefile                  # CLI command shortcuts
+├── requirements.txt          # Python project dependencies
+├── alembic.ini               # Database migration configuration
+└── render.yaml               # Cloud deployment service spec
+```
+
+### 🔄 Data & Execution Workflow
+
+```
+CSV / ERP Transaction Input
+        │
+        ▼
+   FastAPI REST API
+        │
+        ▼
+  Feature Engineering (Log Amount, Night Flag, Amount Z-Score)
+        │
+        ▼
+  Random Forest Classifier (Anomaly Score Calculation)
+        │
+        ▼
+  SHAP Explainability Engine (Top Risk Factor Attribution)
+        │
+        ▼
+  PostgreSQL Storage (Transactions, Predictions, Risk Alerts, Audit Logs)
+        │
+        ▼
+Executive BI Analytics Dashboard (Streamlit & Plotly Visualizations)
 ```
 
 ---
 
-## 🚀 How to Run
+## 📡 API Overview
 
-### 1. Clone and Navigate
+The API endpoints are versioned under `/v1` and protected via JWT Bearer authentication.
+
+<details open>
+<summary><b>🔑 Authentication Endpoints</b></summary>
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/v1/auth/login` | Authenticate username/password; return Access & Refresh JWTs | Public |
+| `POST` | `/v1/auth/refresh` | Issue new access token using valid refresh token | Public |
+| `POST` | `/v1/auth/logout` | Invalidate frontend session & record audit event | Authenticated |
+| `GET` | `/v1/auth/me` | Retrieve profile & assigned role of current user | Authenticated |
+
+</details>
+
+<details open>
+<summary><b>🎯 Prediction & Telemetry Endpoints</b></summary>
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/v1/predict` | Analyze single transaction & save prediction to DB | Admin, Fraud Analyst, Finance User |
+| `POST` | `/v1/predict/batch` | Bulk transaction array analysis & risk summary | Admin, Fraud Analyst, Finance User |
+| `GET` | `/v1/stats` | Retrieve model metadata, hyperparameters, and feature list | Admin, Fraud Analyst, Auditor |
+
+</details>
+
+<details open>
+<summary><b>🚨 Alert Management Endpoints</b></summary>
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/v1/alerts` | List all risk alerts with optional status/risk filtering | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/alerts/{alert_id}` | Get detailed alert payload with linked prediction | Admin, Fraud Analyst, Auditor |
+| `PUT` | `/v1/alerts/{alert_id}/status` | Update alert lifecycle (`OPEN` → `INVESTIGATING` → `RESOLVED`) | Admin, Fraud Analyst |
+
+</details>
+
+<details open>
+<summary><b>🤝 Vendor Directory Endpoints</b></summary>
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/v1/vendors` | List vendor risk profiles with blacklist/watchlist filters | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/vendors/{vendor_id}`| Get specific vendor risk metrics & reputation score | Admin, Fraud Analyst, Auditor |
+| `POST` | `/v1/vendors` | Register a new vendor profile | Admin, Fraud Analyst |
+| `PUT` | `/v1/vendors/{vendor_id}`| Update vendor reputation score or risk flags | Admin, Fraud Analyst |
+| `DELETE`| `/v1/vendors/{vendor_id}`| Delete a vendor profile | Admin, Fraud Analyst |
+
+</details>
+
+<details open>
+<summary><b>📈 BI Analytics & System Endpoints</b></summary>
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/v1/analytics/overview` | Executive KPI overview (total volume, anomaly rate, open alerts) | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/trends` | Daily transaction volume & average anomaly score trends | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/risk-distribution`| Transaction count and volume sums grouped by risk severity | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/departments`| Departmental activity, volume, and risk averages | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/vendors` | Paginated vendor risk rankings sorted by threat metrics | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/alerts-lifecycle`| Alert lifecycle status count distribution | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/model-performance`| Prediction confidence distribution and maximum scores | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/export` | Export combined transaction & prediction data to CSV | Admin, Fraud Analyst, Auditor |
+| `GET` | `/v1/analytics/debug-counts`| DB row count diagnostic tool (Admin only) | Admin |
+| `GET` | `/health` | Health readiness check (verifies model binary loading) | Public |
+| `GET` | `/` | API welcome message & link to `/docs` | Public |
+
+</details>
+
+---
+
+## 📝 Example API Request & Response
+
+### Request (`POST /v1/predict`)
+
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/v1/predict' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <YOUR_ACCESS_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "vendor_id": "V00123",
+  "department": "Procurement",
+  "approved_by": "mgr_01",
+  "posting_time": 3600.0,
+  "transaction_amount": 25000.0,
+  "V1": -1.359, "V2": -0.072, "V3": 2.536, "V4": 1.378,
+  "V5": -0.338, "V6": 0.462, "V7": 0.239, "V8": 0.098,
+  "V9": 0.363, "V10": 0.090, "V11": -0.551, "V12": -0.617,
+  "V13": -0.991, "V14": -0.311, "V15": 1.468, "V16": -0.470,
+  "V17": 0.207, "V18": 0.025, "V19": 0.403, "V20": 0.251,
+  "V21": -0.018, "V22": 0.277, "V23": -0.110, "V24": 0.066,
+  "V25": 0.128, "V26": -0.189, "V27": 0.133, "V28": -0.021
+}'
+```
+
+### Response (`200 OK`)
+
+```json
+{
+  "anomaly_score": 0.865,
+  "is_fraud": true,
+  "risk_level": "HIGH",
+  "alert_message": "⚠️ CRITICAL: Anomaly score (0.865) exceeds high-risk threshold (0.8).",
+  "top_risk_factors": [
+    { "feature": "V14", "importance": 0.1824 },
+    { "feature": "V10", "importance": 0.1531 },
+    { "feature": "V12", "importance": 0.1245 },
+    { "feature": "V17", "importance": 0.0982 },
+    { "feature": "amount_zscore", "importance": 0.0715 }
+  ]
+}
+```
+
+---
+
+## 🖥️ Dashboard Previews
+
+> 🚧 **Screenshots coming soon.**
+>
+> The dashboard currently includes:
+> - Login & Authentication
+> - Single Transaction Analysis
+> - Batch Transaction Analysis
+> - Executive BI Analytics Dashboard
+> - Alert Management
+> - Swagger/OpenAPI Documentation
+
+---
+
+## 🗄️ Database & Persistence Layer
+
+The application utilizes **PostgreSQL** via **SQLAlchemy 2.0 ORM** to enforce relational integrity:
+
+- **`users`**: User account credentials, hashed passwords, active flags, and assigned `role_id`.
+- **`roles`**: System role definitions (`Admin`, `Fraud Analyst`, `Auditor`, `Finance User`).
+- **`transactions`**: Raw ERP financial transaction payloads, metadata, and PCA features.
+- **`predictions`**: Serialized model output scores, risk levels, fraud decisions, model versions, and SHAP top risk factors.
+- **`alerts`**: Automated risk alerts, triggered rules, mitigation recommendations, and lifecycle status (`OPEN`, `INVESTIGATING`, `RESOLVED`, `DISMISSED`).
+- **`vendors`**: Vendor directory tracking reputation scores (0–100), blacklist/watchlist flags, historical transaction counts, and fraud rates.
+- **`audit_logs`**: Immutable security audit trails recording user IDs, action names (`LOGIN`, `ALERT_STATUS_CHANGE`, `VENDOR_UPDATE`, `ANALYTICS_EXPORT`), endpoint paths, client IP addresses, and JSON context payloads.
+
+---
+
+## 🔒 Security & Governance
+
+- **JWT Token Authentication**: Access tokens (15-min expiration) and Refresh tokens (7-day sliding expiration) signed using HMAC-SHA256 (`HS256`).
+- **Password Hashing**: Secure salted password hashing powered by `passlib` and `bcrypt`.
+- **4-Tier Role-Based Access Control (RBAC)**:
+  - 👑 **Admin**: Unrestricted read/write access across all system endpoints and configuration.
+  - 🕵️ **Fraud Analyst**: Access to predictions, alert status updating, vendor directory CRUD, and BI analytics.
+  - 👁️ **Auditor**: Read-only access to model stats, risk alerts, vendor profiles, and BI analytics.
+  - 💼 **Finance User**: Access restricted to making single and batch predictions and viewing model stats.
+- **Audit Compliance**: Mandatory audit log creation triggered upon user login, logout, alert state modification, vendor record mutation, and CSV data export.
+
+---
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+
+- Python 3.10+
+- PostgreSQL 15+ (Optional for testing; in-memory fallback is active during test suites)
+- Git
+
+### 1. Clone & Navigate
+
 ```bash
 git clone https://github.com/iamviplavkr/ERP_ANOMALY_DETECTOR.git
 cd ERP_ANOMALY_DETECTOR
 ```
 
-### 2. Set Up Virtual Environment & Dependencies
-```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac/Linux
+### 2. Virtual Environment & Dependencies
 
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Initialize Directories and Model Artifacts
-Run the setup script or make target to copy/create directories and setup templates:
-```bash
-make setup
-# OR: python scripts/setup_artifacts.py
-```
-> Download `creditcard.csv` from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) and place it in the `data/` directory.
+### 3. Environment Configuration
 
-### 4. Train Model
+Copy `.env.example` to create your local `.env` file:
+
 ```bash
+cp .env.example .env
+```
+
+Ensure your `.env` contains valid credentials:
+
+```env
+APP_NAME="ERP Anomaly Detector"
+ENVIRONMENT="development"
+PORT=8000
+DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/erp_anomaly_db"
+JWT_SECRET_KEY="replace_with_a_secure_random_string"
+JWT_REFRESH_SECRET_KEY="replace_with_another_secure_random_string"
+```
+
+### 4. Database Setup & Seeding
+
+Create the database in PostgreSQL, then seed default roles and users (`admin`, `analyst`, `auditor`, `finance` - password: `password123`):
+
+```bash
+python -m backend.database.seed
+```
+
+### 5. Download Dataset & Train Model
+
+Download `creditcard.csv` from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) and place it in `data/creditcard.csv`.
+
+Run the training pipeline to generate serialized model artifacts (`model.pkl`, `scaler.pkl`, `feature_cols.pkl`, `model_metadata.json`):
+
+```bash
+python ml/training/train.py
+# OR using Makefile:
 make train
-# OR: python ml/training/train.py
 ```
 
-### 5. Launch FastAPI Backend
+### 6. Launch FastAPI REST Backend
+
 ```bash
+python -m uvicorn backend.main:app --reload
+# OR using Makefile:
 make run-api
-# OR: python backend/main.py
 ```
-Visit Swagger API Docs at `http://127.0.0.1:8000/docs`.
 
-### 6. Launch Streamlit Dashboard
+Visit the interactive API documentation at **`http://127.0.0.1:8000/docs`**.
+
+### 7. Launch Streamlit BI Dashboard
+
+In a separate terminal (with virtualenv activated):
+
 ```bash
+streamlit run frontend/dashboard.py
+# OR using Makefile:
 make run-dashboard
-# OR: streamlit run frontend/dashboard.py
 ```
+
+Open your browser at **`http://localhost:8501`**.
 
 ---
 
 ## 🧪 Running Tests
 
-A complete suite of unit and integration tests is located in the `tests/` directory:
+The test suite includes unit, repository, service, API, and integration tests using `pytest`:
+
 ```bash
+# Run all tests
+pytest tests/ -v
+
+# OR using Makefile:
 make test
-# OR: pytest tests/ -v
+
+# Run API tests only
+pytest tests/api/ -v
+
+# Run Service tests only
+pytest tests/services/ -v
 ```
 
 ---
 
-## ⚙️ Configuration Management
+## 🔄 Project Workflow
 
-The application loads environment variables using python-dotenv. Create a `.env` file in the root directory (based on `.env.example`) to configure parameters:
+1. **User Action**: A user submits single transaction parameters or uploads a batch CSV via the Streamlit UI or FastAPI REST API.
+2. **API Layer**: FastAPI validates the incoming JSON body against Pydantic models and verifies the user's JWT access token and RBAC role permissions.
+3. **Feature Engineering**: `engineer_features_from_df()` extracts calculated features (`log_amount`, `hour_of_day`, `is_night`, `amount_zscore`) and scales them via `StandardScaler`.
+4. **Model Inference**: The trained **Random Forest Classifier** evaluates the scaled feature matrix and generates continuous anomaly scores (0.0 to 1.0).
+5. **Explainability**: **SHAP TreeExplainer** isolates the top 5 contributing features for the transaction prediction score.
+6. **Risk Engine & Storage**: Anomaly scores are evaluated against risk thresholds (`0.5` fraud, `0.8` high risk). Transactions, prediction records, automated risk alerts, and audit log entries are saved to PostgreSQL.
+7. **BI Presentation**: Streamlit dashboard components receive real-time database updates to refresh KPI metrics, risk distributions, daily trends, and alert queues.
 
-```env
-APP_NAME="ERP Anomaly Detector"
-DEBUG=true
-PORT=8000
-FRAUD_THRESHOLD=0.5
-HIGH_RISK_THRESHOLD=0.8
-REQUIRE_API_KEY=false
-API_KEY="your-api-key"
-```
+---
+
+## 🚀 Future Improvements
+
+- **🔄 Automated Retraining Pipeline**: Scheduled model evaluation and automated retraining triggers based on concept drift.
+- **⚡ Real-Time Ingestion**: Kafka / RabbitMQ integration for streaming real-time ERP event logs directly into the prediction pipeline.
+- **🔔 Multi-Channel Alerting**: Instant notification dispatch (Email, Slack webhooks, PagerDuty) for Critical risk alerts.
+- **📈 Advanced Time-Series Detection**: Sequential anomaly detection algorithms (LSTM / Autoencoders) for multi-step transaction pattern analysis.
 
 ---
 
 ## 👤 Author
 
-**Viplav Kumar**
-B.Tech Computer Science — Manipal University Jaipur
+**Viplav Kumar**  
+*B.Tech Computer Science — Manipal University Jaipur*  
 GitHub: [@iamviplavkr](https://github.com/iamviplavkr)

@@ -52,20 +52,21 @@ class InMemoryUserRepository(UserRepositoryInterface):
 
     def _prepopulate_users(self) -> None:
         """
-        Creates default mock role-based accounts with hashed passwords.
+        Creates default mock role-based accounts with hashed passwords and stable UUIDs.
         Default password is 'password123' for all accounts.
         """
         roles = {
-            "admin": "Admin",
-            "finance": "Finance User",
-            "analyst": "Fraud Analyst",
-            "auditor": "Auditor"
+            "admin": ("Admin", "00000000-0000-0000-0000-000000000001"),
+            "finance": ("Finance User", "00000000-0000-0000-0000-000000000002"),
+            "analyst": ("Fraud Analyst", "00000000-0000-0000-0000-000000000003"),
+            "auditor": ("Auditor", "00000000-0000-0000-0000-000000000004")
         }
 
-        for username, role in roles.items():
+        for username, (role, uid) in roles.items():
             salt = bcrypt.gensalt()
             pwd_hash = bcrypt.hashpw(b"password123", salt).decode("utf-8")
             self._users[username] = {
+                "id": uid,
                 "username": username,
                 "email": f"{username}@company.com",
                 "role": role,
@@ -83,6 +84,7 @@ class InMemoryUserRepository(UserRepositoryInterface):
         return None
 
     def create(self, user: UserCreate) -> Dict[str, Any]:
+        import uuid
         username_lower = user.username.lower()
         if username_lower in self._users:
             raise ValueError(f"User '{user.username}' already exists.")
@@ -91,6 +93,7 @@ class InMemoryUserRepository(UserRepositoryInterface):
         pwd_hash = bcrypt.hashpw(user.password.encode("utf-8"), salt).decode("utf-8")
 
         new_user = {
+            "id": str(uuid.uuid4()),
             "username": user.username,
             "email": user.email,
             "role": user.role,

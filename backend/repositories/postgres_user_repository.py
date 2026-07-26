@@ -34,6 +34,7 @@ class PostgresUserRepository(UserRepositoryInterface):
     def _to_dict(user: UserModel) -> Dict[str, Any]:
         """Convert an ORM instance to the canonical user dict."""
         return {
+            "id": str(user.id),
             "username": user.username,
             "email": user.email,
             "role": user.role_rel.name,  # join-loaded from roles table

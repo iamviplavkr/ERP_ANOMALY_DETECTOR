@@ -11,8 +11,9 @@ import pytest
 from unittest.mock import MagicMock, patch
 import requests
 
-# 1. Setup a highly robust mock streamlit module to prevent execution errors when importing dashboard.py
+# 1. Setup a highly robust mock streamlit module to prevent execution errors when importing frontend/dashboard.py
 mock_st = MagicMock()
+
 mock_st.session_state = {"authenticated": False}
 
 # Helper to mock columns to return correct number of mocks so unpacking does not fail

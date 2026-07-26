@@ -89,8 +89,20 @@ class Settings:
     TEST_DATABASE_URL: str = os.getenv("TEST_DATABASE_URL", "")
     DB_ECHO: bool = os.getenv("DB_ECHO", "false").lower() == "true"
 
+    # ── Risk Engine Rules Configuration ───────────────────────────────────────
+    RISK_RULE_ANOMALY_HIGH_THRESHOLD: float = float(os.getenv("RISK_RULE_ANOMALY_HIGH_THRESHOLD", "0.8"))
+    RISK_RULE_LARGE_AMOUNT_THRESHOLD: float = float(os.getenv("RISK_RULE_LARGE_AMOUNT_THRESHOLD", "50000.0"))
+    RISK_RULE_LARGE_AMOUNT_ANOMALY_THRESHOLD: float = float(os.getenv("RISK_RULE_LARGE_AMOUNT_ANOMALY_THRESHOLD", "0.3"))
+    RISK_RULE_PROCUREMENT_ANOMALY_THRESHOLD: float = float(os.getenv("RISK_RULE_PROCUREMENT_ANOMALY_THRESHOLD", "0.5"))
+    RISK_RULE_SUSPICIOUS_VENDOR_ANOMALY_THRESHOLD: float = float(os.getenv("RISK_RULE_SUSPICIOUS_VENDOR_ANOMALY_THRESHOLD", "0.4"))
+    RISK_RULE_HIGH_FACTOR_ANOMALY_THRESHOLD: float = float(os.getenv("RISK_RULE_HIGH_FACTOR_ANOMALY_THRESHOLD", "0.5"))
+
     # ── Flags ─────────────────────────────────────────────────────────────────
     TOP_RISK_FACTORS_N: int = int(os.getenv("TOP_RISK_FACTORS_N", "5"))
+
+    # ── Caching ───────────────────────────────────────────────────────────────
+    ANALYTICS_CACHE_TTL_SECONDS: int = int(os.getenv("ANALYTICS_CACHE_TTL_SECONDS", "300"))
+
 
 
 # Module-level singleton — import this everywhere

@@ -159,7 +159,7 @@ class TestPostgresUserRepository:
             password="pass123",
         )
         result = repo.create(user)
-        expected_keys = {"username", "email", "role", "is_active", "password_hash"}
+        expected_keys = {"id", "username", "email", "role", "is_active", "password_hash"}
         assert set(result.keys()) == expected_keys
 
     def test_is_active_default_true(self, repo):

@@ -10,3 +10,6 @@ from backend.models.user import UserModel  # noqa: F401
 from backend.models.transaction import TransactionModel  # noqa: F401
 from backend.models.prediction import PredictionModel  # noqa: F401
 from backend.models.audit_log import AuditLogModel  # noqa: F401
+from backend.models.alert import AlertModel  # noqa: F401
+from backend.models.vendor import VendorRiskModel  # noqa: F401
+

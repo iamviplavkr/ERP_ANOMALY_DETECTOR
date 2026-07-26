@@ -19,10 +19,87 @@ from backend.core.exceptions import TokenInvalidError, InsufficientPermissionsEr
 from backend.database.session import get_db
 from backend.repositories.postgres_user_repository import PostgresUserRepository
 from backend.repositories.user_repository import UserRepositoryInterface, InMemoryUserRepository
+from backend.repositories.transaction_repository import (
+    TransactionRepositoryInterface,
+    PostgresTransactionRepository,
+    InMemoryTransactionRepository,
+)
+from backend.repositories.prediction_repository import (
+    PredictionRepositoryInterface,
+    PostgresPredictionRepository,
+    InMemoryPredictionRepository,
+)
+from backend.repositories.audit_log_repository import (
+    AuditLogRepositoryInterface,
+    PostgresAuditLogRepository,
+    InMemoryAuditLogRepository,
+)
+from backend.repositories.alert_repository import (
+    AlertRepositoryInterface,
+    PostgresAlertRepository,
+    InMemoryAlertRepository,
+)
+from backend.repositories.vendor_repository import (
+    VendorRepositoryInterface,
+    PostgresVendorRepository,
+    InMemoryVendorRepository,
+)
+from backend.repositories.analytics_repository import (
+    AnalyticsRepositoryInterface,
+    PostgresAnalyticsRepository,
+    InMemoryAnalyticsRepository,
+)
 from backend.services.auth_service import AuthService
 
 # Secure credentials extraction helper using standard HTTP Bearer schema
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_transaction_repository(db=Depends(get_db)) -> TransactionRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryTransactionRepository()
+    return PostgresTransactionRepository(db)
+
+
+def get_prediction_repository(db=Depends(get_db)) -> PredictionRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryPredictionRepository()
+    return PostgresPredictionRepository(db)
+
+
+def get_audit_log_repository(db=Depends(get_db)) -> AuditLogRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryAuditLogRepository()
+    return PostgresAuditLogRepository(db)
+
+
+def get_alert_repository(db=Depends(get_db)) -> AlertRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryAlertRepository()
+    return PostgresAlertRepository(db)
+
+
+def get_vendor_repository(db=Depends(get_db)) -> VendorRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryVendorRepository()
+    return PostgresVendorRepository(db)
+
+
+def get_analytics_repository(
+    db=Depends(get_db),
+    transaction_repo=Depends(get_transaction_repository),
+    prediction_repo=Depends(get_prediction_repository),
+    alert_repo=Depends(get_alert_repository),
+    vendor_repo=Depends(get_vendor_repository),
+) -> AnalyticsRepositoryInterface:
+    if settings.ENVIRONMENT == "testing":
+        return InMemoryAnalyticsRepository(
+            transaction_repo=transaction_repo,
+            prediction_repo=prediction_repo,
+            alert_repo=alert_repo,
+            vendor_repo=vendor_repo,
+        )
+    return PostgresAnalyticsRepository(db)
 
 
 def get_user_repository(db=Depends(get_db)) -> UserRepositoryInterface:

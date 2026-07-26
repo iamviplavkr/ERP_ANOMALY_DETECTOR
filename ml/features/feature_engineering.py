@@ -121,9 +121,7 @@ def engineer_features_from_df(df: pd.DataFrame) -> pd.DataFrame:
         df["is_night"] = (
             (df["hour_of_day"] < NIGHT_HOUR_END) | (df["hour_of_day"] > NIGHT_HOUR_START)
         ).astype(int)
-        # Use local mean/std for dashboard (reflects the uploaded file's distribution)
-        amount_std = df["Amount"].std()
-        df["amount_zscore"] = (df["Amount"] - df["Amount"].mean()) / (amount_std + 1e-9)
+        df["amount_zscore"] = (df["Amount"] - AMOUNT_MEAN) / AMOUNT_STD
 
         logger.debug("DataFrame feature engineering complete | rows=%d", len(df))
         return df

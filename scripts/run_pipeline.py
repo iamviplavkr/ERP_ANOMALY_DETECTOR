@@ -85,8 +85,9 @@ def main():
     logger.info("Scaling features...")
     scaler = StandardScaler()
     X_sc = scaler.fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_sc, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
+    indices = np.arange(len(df))
+    X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(
+        X_sc, y, indices, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
     )
 
     # Unsupervised Baseline
@@ -157,7 +158,7 @@ def main():
 
     # Flagged transactions report
     logger.info("Saving flagged transactions report...")
-    df_test = df.iloc[len(X_train):].reset_index(drop=True).copy()
+    df_test = df.iloc[idx_test].reset_index(drop=True).copy()
     flagged_df = evaluator.build_flagged_df(df_test, rf_preds, rf_proba)
 
     flagged_subset = flagged_df[flagged_df['flagged'] == 1][
